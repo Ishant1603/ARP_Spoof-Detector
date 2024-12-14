@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ARP Spoofing Detector</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+        }
+        header {
+            background-color: #333;
+            color: #fff;
+            padding: 1rem;
+            text-align: center;
+        }
+        .container {
+            margin: 2rem auto;
+            max-width: 600px;
+            background: #fff;
+            padding: 2rem;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+        select, button {
+            padding: 10px;
+            font-size: 1rem;
+            margin: 0.5rem 0;
+            width: 100%;
+        }
+        #log {
+            height: 200px;
+            overflow-y: scroll;
+            background: #f9f9f9;
+            border: 1px solid #ddd;
+            padding: 1rem;
+        }
+        button {
+            background: #007bff;
+            color: #fff;
+            border: none;
+            cursor: pointer;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>ARP Spoofing Detector</h1>
+    </header>
+    <div class="container">
+        <h2>Select Network Interface</h2>
+        <select id="interface"></select>
+        <button onclick="startSniffing()">Start Detection</button>
+        <button onclick="stopSniffing()">Stop Detection</button>
+        <h3>Logs:</h3>
+        <div id="log"></div>
+    </div>
+
+    <script>
+        async function fetchInterfaces() {
+            const response = await fetch('/interfaces');
+            const data = await response.json();
+            const select = document.getElementById('interface');
+            data.interfaces.forEach(iface => {
+                const option = document.createElement('option');
+                option.value = iface;
+                option.textContent = iface;
+                select.appendChild(option);
+            });
+        }
+
+        async function startSniffing() {
+            const interface = document.getElementById('interface').value;
+            const response = await fetch('/start_sniffing', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ interface }),
+            });
+            const data = await response.json();
+            alert(data.message);
+            fetchLogs();
+        }
+
+        async function stopSniffing() {
+            const response = await fetch('/stop_sniffing', { method: 'POST' });
+            const data = await response.json();
+            alert(data.message);
+        }
+
+        async function fetchLogs() {
+            setInterval(async () => {
+                const response = await fetch('/logs');
+                const data = await response.json();
+                const logDiv = document.getElementById('log');
+                logDiv.innerHTML = data.logs.join('<br>');
+                logDiv.scrollTop = logDiv.scrollHeight;
+            }, 1000);
+        }
+
+        // Initialize
+        fetchInterfaces();
+    </script>
+</body>
+</html>
